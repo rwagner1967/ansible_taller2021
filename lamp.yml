@@ -1,0 +1,44 @@
+---
+- hosts: centos
+  become: yes
+
+  vars:
+    packages:
+    - httpd
+    - mariadb-server
+    - mariadb
+    - php
+    site: prueba
+    servername: prueba.lab.ort
+    directory: /var/www/prueba/html
+
+  tasks:
+
+  - name: Install LAMP stack
+    yum:
+      name: "{{ item }}"
+      state: latest
+    loop: "{{ packages }}"
+
+  - name: Create virtualhost config
+    template:
+      src: templates/virtualhost.j2
+      dest: /etc/httpd/conf.d/{{ site }}.conf
+      mode: 0644
+      owner: root
+      group: root
+    notify: Restart apache
+
+  - name: Apache server started and enabled
+    service:
+      name: httpd
+      state: started
+      enabled: yes
+
+  handlers:
+  - name: Restart apache
+    service:
+      name: httpd
+      state: restarted
+
+

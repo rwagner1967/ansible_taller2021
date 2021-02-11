@@ -1,9 +1,28 @@
 ---
-- hosts: centos
+- hosts: linux
   become: yes
 
   tasks:
-  - name: Update all packages
+  - name: Update all packages on Red Hat family servers
     yum:
       name: "*"
       state: latest
+    when: ansible_os_family == "RedHat"
+    register: result_rh
+
+  - name: Update all packages on Debian family servers
+    apt:
+      name: "*"
+      state: latest
+      update_cache: yes
+    when: ansible_os_family == "Debian"
+    register: result_deb
+
+  - name: Reboot RH servers
+    reboot:
+    when: result_rh.changed == "true" and ansible_os_family == "RedHat"
+
+  - name: Reboot Debian servers
+    reboot:
+    when: result_deb.changed == "true" and ansible_os_family == "Debian"
+ 
